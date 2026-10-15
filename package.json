@@ -1,0 +1,94 @@
+{
+  "name": "gloss",
+  "version": "0.1.0",
+  "description": "Gloss: AI translation laid over the original. Manga and other pictures (speech bubbles found, the lettering lifted out, the translation set in its style), web pages in place, PDF/Word/PowerPoint/Excel/text/subtitle files, and video with the translation prepared a minute ahead and burned-in subtitles covered.",
+  "main": "main.js",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test test/*.test.js",
+    "smoke": "node test/smoke.js",
+    "dist": "electron-builder --publish never"
+  },
+  "dependencies": {
+    "@tesseract.js-data/eng": "^1.0.0",
+    "ffmpeg-static": "^5.2.0",
+    "jszip": "^3.10.1",
+    "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "^5.4.0",
+    "pngjs": "^7.0.0",
+    "tesseract.js": "^7.0.0"
+  },
+  "devDependencies": {
+    "@napi-rs/canvas": "^0.1.80",
+    "electron": "^44.7.0",
+    "electron-builder": "^26.15.3",
+    "jsdom": "^27.0.0"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "author": "wjun78",
+  "build": {
+    "appId": "io.github.wenjun78.gloss",
+    "productName": "Gloss",
+    "asar": false,
+    "files": [
+      "main.js",
+      "preload.js",
+      "src/**",
+      "renderer/**",
+      "package.json",
+      "!node_modules/pdfjs-dist/build/*.map",
+      "!node_modules/pdfjs-dist/legacy/**",
+      "!node_modules/pdfjs-dist/web/**",
+      "!node_modules/pdfjs-dist/types/**",
+      "!node_modules/pdfjs-dist/build/pdf.mjs",
+      "!node_modules/pdfjs-dist/build/pdf.worker.mjs",
+      "!node_modules/pdfjs-dist/build/pdf.sandbox*",
+      "!node_modules/pdfjs-dist/image_decoders/**"
+    ],
+    "directories": {
+      "buildResources": "build",
+      "output": "dist"
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "icon": "build/icon.png"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Gloss",
+      "artifactName": "Gloss-Setup-${version}.${ext}"
+    },
+    "portable": {
+      "artifactName": "Gloss-${version}-portable.${ext}"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "build/icon.png",
+      "extendInfo": {
+        "NSAudioCaptureUsageDescription": "Hear the video playing in another app, to translate its speech.",
+        "NSScreenCaptureUsageDescription": "See the video playing in another app, to translate its burned-in subtitles."
+      }
+    },
+    "linux": {
+      "target": "dir",
+      "icon": "build/icon.png"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "wenjun78",
+        "repo": "gloss"
+      }
+    ],
+    "copyright": "Copyright © 2026 wjun78"
+  }
+}

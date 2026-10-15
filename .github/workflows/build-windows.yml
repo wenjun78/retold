@@ -1,0 +1,67 @@
+name: Build Windows app
+
+# Builds the installer on a real Windows machine for every pull request and every push
+# to main. On main it also publishes a release named after the version in package.json,
+# once per version: bump the version to publish a new one.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run dist
+
+      # Drives the packaged app through a page, a web page and a clip against a mock API.
+      - name: Smoke test the packaged app
+        continue-on-error: true
+        shell: bash
+        run: |
+          export GLOSS_SMOKE_BIN="$PWD/dist/win-unpacked/Gloss.exe"
+          export GLOSS_SMOKE_OUTDIR="$PWD/smoke-out"
+          node test/smoke.js
+
+      - name: Summarise smoke test
+        if: always()
+        continue-on-error: true
+        shell: bash
+        run: |
+          node -e "
+            const fs = require('fs');
+            let r; try { r = JSON.parse(fs.readFileSync('smoke-out/result.json', 'utf8')); } catch { r = { ok: false, error: 'no result.json' }; }
+            console.log('::notice title=Windows smoke test::' + (r.ok ? 'passed' : 'FAILED ' + String(r.error || '')) + ' | regions: ' + JSON.stringify(r.regions || []).slice(0, 300) + ' | errors: ' + JSON.stringify(r.errors || []).slice(0, 300));
+          "
+
+      - uses: actions/upload-artifact@v5
+        if: always()
+        with:
+          name: gloss-windows
+          path: |
+            dist/*.exe
+            smoke-out/
+          if-no-files-found: warn
+
+      - name: Publish release
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          if gh release view "v$VERSION" >/dev/null 2>&1; then echo "v$VERSION already released"; exit 0; fi
+          gh release create "v$VERSION" dist/*.exe --title "Gloss $VERSION" --notes "Gloss $VERSION. Download Gloss-Setup to install, or the portable file to run without installing. Windows SmartScreen asks once: More info, then Run anyway."

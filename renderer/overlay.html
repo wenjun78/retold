@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' app:; script-src 'self' app:; style-src 'unsafe-inline'">
+<title>Gloss overlay</title>
+<style>
+  html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; font-family: "Segoe UI", system-ui, sans-serif; }
+  .sub { position: absolute; color: #fff; text-align: center; font-weight: 600; line-height: 1.25; padding: 4px 14px; border-radius: 4px; white-space: pre-wrap; background: rgba(0,0,0,0.78); display: flex; align-items: center; justify-content: center; }
+  .sub.white { background: rgba(255,255,255,0.94); color: #111; }
+  .speech { left: 50%; transform: translateX(-50%); bottom: 7%; max-width: 80%; font-size: 30px; }
+  .speech.top { bottom: auto; top: 5%; }
+  .original { font-weight: 400; opacity: 0.75; font-size: 0.75em; display: block; margin-top: 2px; }
+</style>
+</head>
+<body>
+<div id="burned" class="sub" hidden></div>
+<div id="speech" class="sub speech" hidden></div>
+<script src="overlay.js"></script>
+</body>
+</html>

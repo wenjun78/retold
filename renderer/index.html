@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' app: blob: data:; script-src 'self' app:; style-src 'self' app: 'unsafe-inline'; img-src 'self' app: blob: data:; media-src 'self' app: blob:; connect-src 'self' app: blob: data:; worker-src 'self' app: blob:; frame-src *; font-src 'self' app: data:">
+<title>Gloss</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="bar">
+  <div class="brand"><span class="mark"></span><span class="name">Gloss</span></div>
+  <nav class="tabs" role="tablist">
+    <button class="tab" data-mode="image" role="tab">Pictures</button>
+    <button class="tab" data-mode="video" role="tab">Video</button>
+    <button class="tab" data-mode="web" role="tab">Web</button>
+    <button class="tab" data-mode="doc" role="tab">Documents</button>
+  </nav>
+  <div class="langs">
+    <select id="src-lang" title="Language of the original"></select>
+    <button id="swap-langs" class="icon" title="Swap">⇄</button>
+    <select id="dst-lang" title="Language to translate into"></select>
+  </div>
+  <div class="controls">
+    <button id="open-settings" class="icon" title="Settings">⚙</button>
+    <button id="win-min" class="icon win" title="Minimise">–</button>
+    <button id="win-max" class="icon win" title="Maximise">▢</button>
+    <button id="win-close" class="icon win close" title="Close">✕</button>
+  </div>
+</header>
+
+<main>
+  <!-- Pictures: manga pages, scans, screenshots -->
+  <section class="mode" id="mode-image" hidden>
+    <aside class="pages">
+      <div class="pages-head">
+        <button id="img-open">Open pictures…</button>
+        <button id="img-folder" title="Every picture in a folder, in order">Folder…</button>
+      </div>
+      <ol id="page-list" class="page-list"></ol>
+      <div class="pages-foot"><button id="img-translate-all" class="primary" disabled>Translate all pages</button></div>
+    </aside>
+    <div class="stage">
+      <div class="toolbar">
+        <button id="img-translate" class="primary" disabled>Translate this page</button>
+        <label class="seg"><span>Show</span>
+          <button id="show-original" class="segbtn">Original</button><button id="show-translated" class="segbtn on">Translated</button>
+        </label>
+        <label>Overlay <input type="range" id="opacity" min="0" max="100" value="100"> <span id="opacity-val">100%</span></label>
+        <label><input type="checkbox" id="edit-boxes"> Edit boxes</label>
+        <label>Set <select id="direction"><option value="auto">as the original</option><option value="horizontal">left to right</option><option value="vertical">top to bottom</option></select></label>
+        <label><input type="checkbox" id="caps"> CAPS</label>
+        <span class="grow"></span>
+        <button id="img-export">Save…</button>
+      </div>
+      <div class="canvas-wrap" id="canvas-wrap">
+        <div class="drop" id="img-drop">
+          <p><b>Drop manga pages, scans or screenshots here</b></p>
+          <p>Speech bubbles are found, the lettering is read and lifted out, and the translation is set in its place — Chinese and Japanese top to bottom, English left to right. Slide the overlay to see the original underneath.</p>
+        </div>
+        <div class="layers" id="layers" hidden>
+          <canvas id="c-original"></canvas>
+          <canvas id="c-translated"></canvas>
+          <div id="boxes" class="boxes"></div>
+        </div>
+      </div>
+      <div class="status" id="img-status"></div>
+    </div>
+    <aside class="side" id="regions-panel">
+      <div class="side-head"><span>Text on this page</span><button id="img-reread" title="Read the page again">Re-read</button></div>
+      <ol id="region-list" class="region-list"></ol>
+    </aside>
+  </section>
+
+  <!-- Video -->
+  <section class="mode" id="mode-video" hidden>
+    <div class="stage">
+      <div class="toolbar">
+        <button id="vid-open" class="primary">Open video…</button>
+        <label>Words from <select id="vid-source"><option value="auto">subtitles if any, else speech</option><option value="speech">speech</option><option value="subtitles">subtitles only</option></select></label>
+        <label>Box <select id="vid-cover"><option value="auto">auto</option><option value="black">black</option><option value="white">white</option></select></label>
+        <label>Size <input type="number" id="vid-size" min="14" max="64" value="28" style="width:4em"></label>
+        <span class="grow"></span>
+        <span id="vid-ready" class="pill" hidden></span>
+        <button id="vid-srt" disabled>Save subtitles (.srt)…</button>
+      </div>
+      <div class="player-wrap" id="player-wrap">
+        <div class="drop" id="vid-drop">
+          <p><b>Drop a video here</b></p>
+          <p>The translation is prepared a minute ahead of where you are, so it keeps up. Subtitles burned into the picture are covered with a box and the translation set on top; otherwise the speech is transcribed and translated. A subtitle track or an .srt next to the file is used when there is one.</p>
+          <p><button id="live-open">Watching in another app? Lay the translation over it →</button></p>
+        </div>
+        <video id="player" controls hidden></video>
+        <div id="sub-overlay" class="sub-overlay"></div>
+      </div>
+      <div class="status" id="vid-status"></div>
+    </div>
+    <aside class="side" id="live-panel" hidden>
+      <div class="side-head"><span>Translate over another app</span><button id="live-close">Close</button></div>
+      <p class="hint">Pick the screen or window the video plays in. A see-through layer over it shows the translation: burned-in subtitles are covered and replaced; speech is transcribed after each pause.</p>
+      <div id="live-sources" class="sources"></div>
+      <div class="side-foot"><button id="live-start" class="primary" disabled>Start</button><button id="live-stop" hidden>Stop</button></div>
+      <div id="live-log" class="log"></div>
+      <video id="live-video" muted hidden></video>
+    </aside>
+  </section>
+
+  <!-- Web -->
+  <section class="mode" id="mode-web" hidden>
+    <div class="stage">
+      <div class="toolbar address">
+        <button id="web-back" class="icon" title="Back">←</button>
+        <button id="web-fwd" class="icon" title="Forward">→</button>
+        <button id="web-reload" class="icon" title="Reload">↻</button>
+        <input id="web-url" type="text" placeholder="Type a web address and press Enter" spellcheck="false">
+        <button id="web-translate" class="primary">Translate page</button>
+        <label class="seg"><button id="web-original" class="segbtn">Original</button><button id="web-translated" class="segbtn on">Translated</button></label>
+        <label><input type="checkbox" id="web-auto" checked> Keep translating as the page changes</label>
+      </div>
+      <webview id="webview" src="about:blank" allowpopups="false"></webview>
+      <div class="status" id="web-status"></div>
+    </div>
+  </section>
+
+  <!-- Documents -->
+  <section class="mode" id="mode-doc" hidden>
+    <div class="stage">
+      <div class="canvas-wrap">
+        <div class="drop" id="doc-drop">
+          <p><b>Drop a document here</b></p>
+          <p>Word, PowerPoint and Excel files come back as the same file with the words translated and everything else untouched. PDFs open as pages: the translation is set over the original text and the result saved as a new PDF. Text, Markdown and subtitle files (.srt, .vtt) keep their structure and timing.</p>
+          <p><button id="doc-open" class="primary">Open a document…</button></p>
+          <ol id="doc-log" class="doc-log"></ol>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div id="toasts" class="toasts"></div>
+
+<!-- Settings -->
+<dialog id="settings">
+  <form method="dialog" class="settings">
+    <header><b>Settings</b><button type="submit" class="icon" value="close">✕</button></header>
+    <div class="body">
+      <h3>Service</h3>
+      <p class="hint">Any OpenAI-compatible API: the chat model translates, the image model reads lettering, and the speech model transcribes video. <button type="button" class="link" data-preset="openai">OpenAI</button> · <button type="button" class="link" data-preset="groq">Groq</button> · <button type="button" class="link" data-preset="ollama">Ollama (local)</button></p>
+      <label>API base URL <input id="s-base" type="text" spellcheck="false"></label>
+      <label>API key <input id="s-key" type="password" placeholder="(saved)"></label>
+      <label>Chat model (translation) <input id="s-model" type="text" spellcheck="false"></label>
+      <label>Image model (reads bubbles; blank = chat model) <input id="s-vision" type="text" spellcheck="false"></label>
+      <label>Speech model (video) <input id="s-stt" type="text" spellcheck="false"></label>
+      <label>Extra request parameters (JSON) <input id="s-extra" type="text" spellcheck="false"></label>
+
+      <h3>Translation</h3>
+      <label>Register <select id="s-formality"><option value="natural">natural</option><option value="formal">formal</option><option value="casual">casual</option></select></label>
+      <label>Glossary, one "term = translation" per line <textarea id="s-glossary" rows="4" spellcheck="false"></textarea></label>
+      <p class="hint">Translation memory: <span id="s-memory">0</span> entries. <button type="button" class="link" id="s-memory-clear">Clear</button></p>
+
+      <h3>Pictures</h3>
+      <label>Read lettering with <select id="s-ocr"><option value="vision">the image model (best for manga)</option><option value="local">Tesseract on this computer (no API use)</option></select></label>
+      <label><input type="checkbox" id="s-bubbles"> Find speech bubbles (off: text lines anywhere)</label>
+      <label><input type="checkbox" id="s-mimic"> Match the original lettering's size, weight, colour and outline</label>
+      <label>Font for Latin text <input id="s-font-latin" type="text" placeholder="comic lettering fonts, then the system font"></label>
+      <label>Font for Chinese/Japanese <input id="s-font-cjk" type="text" placeholder="Noto Sans CJK, Microsoft YaHei, …"></label>
+
+      <h3>Video</h3>
+      <label>Prepare ahead (seconds) <input id="s-ahead" type="number" min="20" max="600"></label>
+      <label>Transcribe in pieces of (seconds) <input id="s-chunk" type="number" min="8" max="60"></label>
+      <label>Look for burned-in subtitles in the bottom <input id="s-band" type="number" min="10" max="60" style="width:4em"> % of the picture</label>
+      <label>Subtitle position <select id="s-position"><option value="bottom">bottom</option><option value="top">top</option></select></label>
+
+      <h3>This app</h3>
+      <label>Theme <select id="s-theme"><option value="dark">dark</option><option value="light">light</option></select></label>
+      <p class="hint">Gloss <span id="s-version"></span>. Keys are stored <span id="s-encrypted"></span>.</p>
+    </div>
+    <footer><button type="submit" value="save" class="primary">Save</button><button type="submit" value="close">Cancel</button></footer>
+  </form>
+</dialog>
+
+<script src="../src/languages.js"></script>
+<script src="../src/image/layout.js"></script>
+<script src="../src/video/cues.js"></script>
+<script src="lettering.js"></script>
+<script src="viewer.js"></script>
+<script src="capture.js"></script>
+<script src="video.js"></script>
+<script src="web.js"></script>
+<script src="docs.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
