@@ -5,7 +5,7 @@
 // measurer, so the same code runs in the window (canvas) and in tests.
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) module.exports = factory();
-  else (root.Gloss = root.Gloss || {}).layout = factory();
+  else (root.Retold = root.Retold || {}).layout = factory();
 })(typeof self !== 'undefined' ? self : this, function () {
   'use strict';
   const CJK = /[぀-ヿ㐀-䶿一-鿿가-힯＀-￯]/;

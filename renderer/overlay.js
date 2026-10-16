@@ -7,7 +7,7 @@
   let speechTimer = 0;
   const cls = () => (video.cover === 'white' ? 'white' : '');
 
-  window.gloss.on('overlay', (c) => {
+  window.retold.on('overlay', (c) => {
     if (c.kind === 'settings') { video = c.video; return; }
     if (c.kind === 'speech') {
       const el = $('#speech');

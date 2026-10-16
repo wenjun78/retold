@@ -3,7 +3,7 @@
 // for left-to-right text, columns right to left for Chinese and Japanese set top to
 // bottom, in the size, weight, colour and outline of the original lettering.
 window.Lettering = (() => {
-  const { layout, languages } = window.Gloss;
+  const { layout, languages } = window.Retold;
   const LATIN = '"CC Wild Words", "Anime Ace 2.0 BB", "Komika Axis", "Bangers", "Comic Sans MS", "Segoe UI", Arial, sans-serif';
   const CJK = { 'zh-Hans': '"Noto Sans CJK SC", "Source Han Sans SC", "Microsoft YaHei", "PingFang SC", sans-serif', 'zh-Hant': '"Noto Sans CJK TC", "Source Han Sans TC", "Microsoft JhengHei", "PingFang TC", sans-serif', ja: '"Noto Sans CJK JP", "Source Han Sans", "Yu Gothic UI", "Meiryo", "Hiragino Sans", sans-serif', ko: '"Noto Sans CJK KR", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif' };
 

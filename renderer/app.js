@@ -33,7 +33,7 @@ window.App = (() => {
     el.addEventListener('dragleave', () => el.classList.remove('over'));
     el.addEventListener('drop', (e) => {
       e.preventDefault(); el.classList.remove('over');
-      const files = [...e.dataTransfer.files].map(f => window.gloss.pathFor(f)).filter(Boolean);
+      const files = [...e.dataTransfer.files].map(f => window.retold.pathFor(f)).filter(Boolean);
       if (files.length) onFiles(files);
     });
   }
@@ -41,7 +41,7 @@ window.App = (() => {
   function setMode(mode) {
     for (const s of document.querySelectorAll('.mode')) s.hidden = s.id !== 'mode-' + mode;
     for (const t of document.querySelectorAll('.tab')) t.classList.toggle('on', t.dataset.mode === mode);
-    if (settings) window.gloss.call('config:update', { ui: { mode } });
+    if (settings) window.retold.call('config:update', { ui: { mode } });
     if (mode === 'image') window.dispatchEvent(new Event('resize'));
   }
 
@@ -52,7 +52,7 @@ window.App = (() => {
   }
 
   async function changeLanguages() {
-    settings = await window.gloss.call('config:update', { languages: { source: $('#src-lang').value, target: $('#dst-lang').value } });
+    settings = await window.retold.call('config:update', { languages: { source: $('#src-lang').value, target: $('#dst-lang').value } });
     broadcast();
   }
 
@@ -89,25 +89,25 @@ window.App = (() => {
       ui: { theme: $('#s-theme').value },
     };
     if ($('#s-key').value.trim()) patch.llm.apiKey = $('#s-key').value.trim();
-    settings = await window.gloss.call('config:update', patch);
+    settings = await window.retold.call('config:update', patch);
     broadcast();
   }
 
   async function init() {
-    settings = await window.gloss.call('config:get');
+    settings = await window.retold.call('config:get');
     fillLanguages();
     $('#src-lang').addEventListener('change', changeLanguages); $('#dst-lang').addEventListener('change', changeLanguages);
     $('#swap-langs').addEventListener('click', () => { const a = $('#src-lang').value, b = $('#dst-lang').value; if (a === 'auto') return; $('#src-lang').value = b; $('#dst-lang').value = a; changeLanguages(); });
     for (const t of document.querySelectorAll('.tab')) t.addEventListener('click', () => setMode(t.dataset.mode));
-    $('#win-min').addEventListener('click', () => window.gloss.call('window:minimize'));
-    $('#win-max').addEventListener('click', () => window.gloss.call('window:maximize'));
-    $('#win-close').addEventListener('click', () => window.gloss.call('window:close'));
+    $('#win-min').addEventListener('click', () => window.retold.call('window:minimize'));
+    $('#win-max').addEventListener('click', () => window.retold.call('window:maximize'));
+    $('#win-close').addEventListener('click', () => window.retold.call('window:close'));
     $('#open-settings').addEventListener('click', openSettings);
     $('#settings form').addEventListener('submit', (e) => { if (e.submitter && e.submitter.value === 'save') saveSettings(); });
     for (const b of document.querySelectorAll('[data-preset]')) b.addEventListener('click', () => { const p = PRESETS[b.dataset.preset]; $('#s-base').value = p.base; $('#s-model').value = p.model; $('#s-stt').value = p.stt; $('#s-vision').value = p.vision; });
-    $('#s-memory-clear').addEventListener('click', async () => { settings = await window.gloss.call('memory:clear'); $('#s-memory').textContent = settings.memory; });
-    window.gloss.on('notice', (m) => notice(m.text, m.kind));
-    window.gloss.on('window', (m) => { $('#win-max').textContent = m.maximized ? '❐' : '▢'; });
+    $('#s-memory-clear').addEventListener('click', async () => { settings = await window.retold.call('memory:clear'); $('#s-memory').textContent = settings.memory; });
+    window.retold.on('notice', (m) => notice(m.text, m.kind));
+    window.retold.on('window', (m) => { $('#win-max').textContent = m.maximized ? '❐' : '▢'; });
     window.Viewer.init(settings); window.Video.init(settings); window.Web.init(settings); window.Docs.init(settings);
     broadcast();
     setMode(settings.config.ui.mode || 'image');
@@ -116,7 +116,7 @@ window.App = (() => {
     document.addEventListener('dragover', (e) => e.preventDefault());
     document.addEventListener('drop', (e) => {
       e.preventDefault();
-      const files = [...e.dataTransfer.files].map(f => window.gloss.pathFor(f)).filter(Boolean);
+      const files = [...e.dataTransfer.files].map(f => window.retold.pathFor(f)).filter(Boolean);
       if (!files.length || e.target.closest('.canvas-wrap, .player-wrap, .drop')) return;
       if (files.some(f => /\.(mp4|mkv|webm|mov|m4v|avi|ts|mp3|m4a|wav|ogg|flac)$/i.test(f))) { setMode('video'); window.Video.open(files[0]); }
       else if (files.every(f => /\.(png|jpe?g|webp|bmp|gif)$/i.test(f))) { setMode('image'); window.Viewer.openFiles(files); }

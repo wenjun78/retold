@@ -21,17 +21,17 @@ window.Web = (() => {
     if (!/^https?:/.test(w.getURL())) return;
     translating = true;
     try {
-      if (!script) script = await window.gloss.call('web:script');
+      if (!script) script = await window.retold.call('web:script');
       await w.executeJavaScript(script);
-      const items = await w.executeJavaScript(incremental ? 'window.__gloss.pending()' : 'window.__gloss.collect()');
+      const items = await w.executeJavaScript(incremental ? 'window.__retold.pending()' : 'window.__retold.collect()');
       if (!items.length) { if (!incremental) status('Nothing to translate on this page.'); return; }
-      const lang = await w.executeJavaScript('window.__gloss.lang()');
+      const lang = await w.executeJavaScript('window.__retold.lang()');
       let done = 0;
       // Batches of blocks go out in order, so the top of the page changes first.
       for (let i = 0; i < items.length; i += 40) {
         const batch = items.slice(i, i + 40);
-        const got = await window.gloss.call('translate:items', batch, { kind: 'web', what: 'web', source: settings.config.languages.source === 'auto' && lang ? guess(lang) : settings.config.languages.source });
-        await w.executeJavaScript(`window.__gloss.apply(${JSON.stringify(got)})`);
+        const got = await window.retold.call('translate:items', batch, { kind: 'web', what: 'web', source: settings.config.languages.source === 'auto' && lang ? guess(lang) : settings.config.languages.source });
+        await w.executeJavaScript(`window.__retold.apply(${JSON.stringify(got)})`);
         done += batch.length;
         status(`Translated ${done} of ${items.length} blocks…`);
       }
@@ -46,7 +46,7 @@ window.Web = (() => {
 
   function setView(which) {
     $('#web-original').classList.toggle('on', which === 'original'); $('#web-translated').classList.toggle('on', which === 'translated');
-    wv().executeJavaScript(`window.__gloss && window.__gloss.show(${JSON.stringify(which)})`).catch(() => {});
+    wv().executeJavaScript(`window.__retold && window.__retold.show(${JSON.stringify(which)})`).catch(() => {});
   }
 
   function poll() {
@@ -67,7 +67,7 @@ window.Web = (() => {
     w.addEventListener('did-navigate', (e) => { $('#web-url').value = e.url; translatedOnce = false; status(''); });
     w.addEventListener('did-navigate-in-page', (e) => { if (e.isMainFrame) $('#web-url').value = e.url; });
     w.addEventListener('dom-ready', () => { if ($('#web-auto').checked && $('#web-translated').classList.contains('on') && sessionTranslated) translatePage(); });
-    w.addEventListener('page-title-updated', (e) => { document.title = e.title ? `${e.title} — Gloss` : 'Gloss'; });
+    w.addEventListener('page-title-updated', (e) => { document.title = e.title ? `${e.title} — Retold` : 'Retold'; });
     w.addEventListener('did-fail-load', (e) => { if (e.errorCode !== -3 && e.isMainFrame) status(`Could not open ${e.validatedURL}: ${e.errorDescription}`); });
     const home = s.config.web.homepage;
     if (home && /^https?:\/\/./.test(home)) w.src = home;

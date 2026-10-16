@@ -6,7 +6,7 @@ window.Capture = (() => {
   let stream = null, ctx = null, timer = 0, worklet = null;
 
   // A worklet that posts the raw samples; silence detection and chunking happen here.
-  const WORKLET = `class G extends AudioWorkletProcessor{process(i){const c=i[0]&&i[0][0];if(c)this.port.postMessage(c.slice());return true;}}registerProcessor('gloss-tap',G);`;
+  const WORKLET = `class G extends AudioWorkletProcessor{process(i){const c=i[0]&&i[0][0];if(c)this.port.postMessage(c.slice());return true;}}registerProcessor('retold-tap',G);`;
 
   async function start({ band = 0.3, video, onAudio, onFrame }) {
     stream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 5 }, audio: true });
@@ -26,7 +26,7 @@ window.Capture = (() => {
       ctx = new AudioContext({ sampleRate: 16000 });
       await ctx.audioWorklet.addModule(URL.createObjectURL(new Blob([WORKLET], { type: 'text/javascript' })));
       const src = ctx.createMediaStreamSource(new MediaStream(stream.getAudioTracks()));
-      worklet = new AudioWorkletNode(ctx, 'gloss-tap');
+      worklet = new AudioWorkletNode(ctx, 'retold-tap');
       src.connect(worklet);
       let buf = [], len = 0, quiet = 0, loud = 0;
       const flush = () => {

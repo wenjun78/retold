@@ -30,7 +30,7 @@ const { translateText, planMarkdown, planText } = require('../src/docs/text');
 const { pdfFromPages } = require('../src/docs/pdf');
 
 let srv, tmp;
-test.before(async () => { srv = await mock.start(); tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'gloss-')); });
+test.before(async () => { srv = await mock.start(); tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'retold-')); });
 test.after(async () => { await srv.close(); fs.rmSync(tmp, { recursive: true, force: true }); });
 
 const cfgFor = (over = {}) => {
@@ -426,29 +426,29 @@ test('page script: runs of text collected with inline markers, applied, flipped 
   const dom = new JSDOM('<html lang="de"><head><title>Hallo</title></head><body><p>Klick <a href="/x">hier</a>, um fortzufahren.<br>Zweite Zeile.</p><pre>code</pre><button title="Speichern">OK</button><img alt="Ein Hund"><p translate="no">Bleib</p></body></html>', { runScripts: 'outside-only' });
   const w = dom.window;
   w.eval(pageScript);
-  const items = w.__gloss.collect();
+  const items = w.__retold.collect();
   const byId = Object.fromEntries(items.map(i => [i.id, i.text]));
   assert.equal(items[0].text, 'Klick <i1>hier</i1>, um fortzufahren.\nZweite Zeile.');
   assert.ok(Object.values(byId).includes('Speichern') && Object.values(byId).includes('Ein Hund') && Object.values(byId).includes('Hallo'));
   assert.ok(!Object.values(byId).includes('code') && !Object.values(byId).includes('Bleib'));
-  assert.equal(w.__gloss.lang(), 'de');
+  assert.equal(w.__retold.lang(), 'de');
   const map = {}; for (const it of items) map[it.id] = it.text.replace('Klick', 'Click').replace('hier', 'here').replace('um fortzufahren', 'to continue').replace('Zweite Zeile', 'Second line').replace('Speichern', 'Save').replace('Ein Hund', 'A dog').replace('Hallo', 'Hello');
-  w.__gloss.apply(map);
+  w.__retold.apply(map);
   const p = w.document.querySelector('p');
   assert.equal(p.textContent, 'Click here, to continue.Second line.');
   assert.equal(p.querySelector('a').getAttribute('href'), '/x', 'the link survives');
   assert.equal(w.document.querySelector('img').getAttribute('alt'), 'A dog');
   assert.equal(w.document.title, 'Hello');
-  assert.equal(w.document.querySelector('.gloss-t').title, 'Klick hier, um fortzufahren.Zweite Zeile.');
-  w.__gloss.show('original');
+  assert.equal(w.document.querySelector('.retold-t').title, 'Klick hier, um fortzufahren.Zweite Zeile.');
+  w.__retold.show('original');
   assert.equal(p.textContent, 'Klick hier, um fortzufahren.Zweite Zeile.');
   assert.equal(w.document.title, 'Hallo');
-  w.__gloss.show('translated');
+  w.__retold.show('translated');
   const late = w.document.createElement('p'); late.textContent = 'Später'; w.document.body.appendChild(late);
   await new Promise(r => setTimeout(r, 20));
-  const pending = w.__gloss.pending();
+  const pending = w.__retold.pending();
   assert.equal(pending.length, 1); assert.equal(pending[0].text, 'Später');
-  assert.equal(w.__gloss.collect().length, 0, 'nothing is collected twice');
+  assert.equal(w.__retold.collect().length, 0, 'nothing is collected twice');
 });
 
 // ---- documents ---------------------------------------------------------------------------------

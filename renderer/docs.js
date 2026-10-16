@@ -9,7 +9,7 @@ window.Docs = (() => {
   function log(text, { file = '', kind = '' } = {}) {
     const li = document.createElement('li'); li.className = kind;
     li.textContent = text;
-    if (file) { const a = document.createElement('a'); a.href = '#'; a.textContent = ' Show in folder'; a.addEventListener('click', (e) => { e.preventDefault(); window.gloss.call('shell:show', file); }); li.appendChild(a); }
+    if (file) { const a = document.createElement('a'); a.href = '#'; a.textContent = ' Show in folder'; a.addEventListener('click', (e) => { e.preventDefault(); window.retold.call('shell:show', file); }); li.appendChild(a); }
     $('#doc-log').prepend(li);
   }
 
@@ -21,13 +21,13 @@ window.Docs = (() => {
         if (!/\.(docx|pptx|xlsx|txt|md|markdown|srt|vtt)$/i.test(name)) { log(`${name}: not a document this app translates.`, { kind: 'err' }); continue; }
         const ext = name.match(/\.(\w+)$/)[1];
         const target = settings.config.languages.target;
-        const out = await window.gloss.call('dialog:save', { name: file.replace(/\.(\w+)$/, `.${target}.${ext}`), filters: [{ name: ext.toUpperCase(), extensions: [ext] }] });
+        const out = await window.retold.call('dialog:save', { name: file.replace(/\.(\w+)$/, `.${target}.${ext}`), filters: [{ name: ext.toUpperCase(), extensions: [ext] }] });
         if (!out) continue;
         const li = document.createElement('li'); li.textContent = `${name}: translating…`; $('#doc-log').prepend(li);
         const onProgress = (m) => { if (m.what === 'doc') li.textContent = `${name}: translating ${m.done} of ${m.total}…`; };
-        window.gloss.on('progress', onProgress);
+        window.retold.on('progress', onProgress);
         try {
-          const saved = await window.gloss.call('doc:translate', file, out);
+          const saved = await window.retold.call('doc:translate', file, out);
           li.remove(); log(`${name} → ${saved.split(/[\\/]/).pop()}`, { file: saved });
         } finally { /* the listener stays registered but refers to a removed element */ }
       } catch (e) { log(`${name}: ${e.message}`, { kind: 'err' }); }
@@ -39,7 +39,7 @@ window.Docs = (() => {
       pdfjs = await import('../node_modules/pdfjs-dist/build/pdf.min.mjs');
       pdfjs.GlobalWorkerOptions.workerSrc = new URL('../node_modules/pdfjs-dist/build/pdf.worker.min.mjs', location.href).href;
     }
-    const { data } = await window.gloss.call('file:read', file);
+    const { data } = await window.retold.call('file:read', file);
     const doc = await pdfjs.getDocument({ data }).promise;
     const stem = name.replace(/\.pdf$/i, '');
     log(`${name}: ${doc.numPages} pages opened in Pictures. Translate them there and save as PDF.`);
@@ -66,7 +66,7 @@ window.Docs = (() => {
 
   function init(s) {
     settings = s;
-    $('#doc-open').addEventListener('click', async () => open(await window.gloss.call('dialog:open', { kind: 'doc', multiple: true })));
+    $('#doc-open').addEventListener('click', async () => open(await window.retold.call('dialog:open', { kind: 'doc', multiple: true })));
     window.App.dropZone($('#doc-drop'), open);
   }
   function onSettings(s) { settings = s; }

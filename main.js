@@ -16,8 +16,8 @@ const { pdfFromPages } = require('./src/docs/pdf');
 const { LANGUAGES } = require('./src/languages');
 const pagewalk = require('./src/web/pagewalk');
 
-if (process.env.GLOSS_USER_DATA) app.setPath('userData', process.env.GLOSS_USER_DATA);
-if (process.platform === 'win32') app.setAppUserModelId('io.github.wenjun78.gloss');
+if (process.env.RETOLD_USER_DATA) app.setPath('userData', process.env.RETOLD_USER_DATA);
+if (process.platform === 'win32') app.setAppUserModelId('io.github.wenjun78.retold');
 
 const firstInstance = app.requestSingleInstanceLock();
 if (!firstInstance) app.quit();
@@ -35,7 +35,7 @@ const pages = new Map();     // page id -> Page
 let video = null;            // the open VideoSession
 let captureSourceId = '';    // screen/window picked for the live overlay
 
-const send = (event, payload) => { if (win && !win.isDestroyed()) win.webContents.send('gloss:' + event, payload); };
+const send = (event, payload) => { if (win && !win.isDestroyed()) win.webContents.send('retold:' + event, payload); };
 const notice = (text, kind = 'info') => send('notice', { text, kind });
 
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.svg': 'image/svg+xml', '.json': 'application/json', '.woff2': 'font/woff2', '.ttf': 'font/ttf', '.wasm': 'application/wasm', '.map': 'application/json' };
@@ -79,7 +79,7 @@ function createWindow() {
     ? saved : { width: Math.min(1280, area.width - 40), height: Math.min(840, area.height - 40), x: area.x + 20, y: area.y + 20 };
   win = new BrowserWindow({
     ...bounds, minWidth: 720, minHeight: 480,
-    frame: false, show: false, backgroundColor: config.get().ui.theme === 'light' ? '#F3F5F7' : '#1B2530', title: 'Gloss',
+    frame: false, show: false, backgroundColor: config.get().ui.theme === 'light' ? '#F3F5F7' : '#1B2530', title: 'Retold',
     webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false, sandbox: true, webviewTag: true, backgroundThrottling: false },
   });
   win.loadURL('app://ui/renderer/index.html');
@@ -293,7 +293,7 @@ ipcMain.handle('live:start', async (_e, { sourceId, displayId }) => {
   const display = screen.getAllDisplays().find(d => String(d.id) === String(displayId)) || screen.getPrimaryDisplay();
   if (live) live.stop();
   live = new LiveSession({ llm, translator, ocr, config: () => config.get() });
-  live.on('cue', (c) => { if (overlay && !overlay.isDestroyed()) overlay.webContents.send('gloss:overlay', c); send('overlay', c); });
+  live.on('cue', (c) => { if (overlay && !overlay.isDestroyed()) overlay.webContents.send('retold:overlay', c); send('overlay', c); });
   live.on('notice', (t) => notice(t, 'error'));
   openOverlay(display);
   return true;
@@ -305,32 +305,32 @@ ipcMain.handle('live:stop', () => { if (live) { live.stop(); live = null; } if (
 function openOverlay(display) {
   if (overlay && !overlay.isDestroyed()) overlay.close();
   overlay = new BrowserWindow({
-    ...display.bounds, frame: false, transparent: true, alwaysOnTop: true, skipTaskbar: true, focusable: false, hasShadow: false, resizable: false, show: false, title: 'Gloss overlay',
+    ...display.bounds, frame: false, transparent: true, alwaysOnTop: true, skipTaskbar: true, focusable: false, hasShadow: false, resizable: false, show: false, title: 'Retold overlay',
     webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false, sandbox: true },
   });
   overlay.setIgnoreMouseEvents(true);
   overlay.setAlwaysOnTop(true, 'screen-saver');
   if (process.platform === 'darwin') overlay.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
   overlay.loadURL('app://ui/renderer/overlay.html');
-  overlay.once('ready-to-show', () => { overlay.showInactive(); overlay.webContents.send('gloss:overlay', { kind: 'settings', video: config.get().video }); });
+  overlay.once('ready-to-show', () => { overlay.showInactive(); overlay.webContents.send('retold:overlay', { kind: 'settings', video: config.get().video }); });
   overlay.on('closed', () => { overlay = null; });
 }
 
 process.on('unhandledRejection', (e) => { notice(e && e.message ? e.message : String(e), 'error'); });
 
-// Smoke test (test/smoke.js): with GLOSS_SMOKE set to a file path, the window is driven
+// Smoke test (test/smoke.js): with RETOLD_SMOKE set to a file path, the window is driven
 // through a page translation against a mock API and the outcome written there.
-if (process.env.GLOSS_SMOKE) {
+if (process.env.RETOLD_SMOKE) {
   app.whenReady().then(() => {
     const errors = [];
     const start = Date.now();
-    const finish = (result) => { fs.writeFileSync(process.env.GLOSS_SMOKE, JSON.stringify({ ...result, errors, ms: Date.now() - start })); app.quit(); };
+    const finish = (result) => { fs.writeFileSync(process.env.RETOLD_SMOKE, JSON.stringify({ ...result, errors, ms: Date.now() - start })); app.quit(); };
     const attach = () => {
       win.webContents.on('console-message', (e) => { if (e.level === 'error' || e.level === 3) errors.push(String(e.message).slice(0, 300)); });
       win.webContents.once('did-finish-load', async () => {
         try {
           await new Promise(r => setTimeout(r, 1500));
-          const image = process.env.GLOSS_SMOKE_IMAGE, out = process.env.GLOSS_SMOKE_OUT;
+          const image = process.env.RETOLD_SMOKE_IMAGE, out = process.env.RETOLD_SMOKE_OUT;
           const result = await win.webContents.executeJavaScript(`(async () => {
             const have = ['App', 'Viewer', 'Video', 'Web', 'Docs', 'Lettering', 'Capture'].filter(k => window[k]);
             const r = { title: document.title, modules: have, tabs: document.querySelectorAll('.tab').length, languages: document.querySelectorAll('#dst-lang option').length };
@@ -342,7 +342,7 @@ if (process.env.GLOSS_SMOKE) {
               r.regions = p.regions.map(x => ({ source: x.source, target: x.target, orientation: x.orientation, size: x.style && x.style.size }));
               r.state = p.state; r.status = document.querySelector('#img-status').textContent;
             }
-            const webUrl = ${JSON.stringify(process.env.GLOSS_SMOKE_WEB || '')};
+            const webUrl = ${JSON.stringify(process.env.RETOLD_SMOKE_WEB || '')};
             if (webUrl) {
               window.App.setMode('web');
               const wv = document.querySelector('#webview');
@@ -351,7 +351,7 @@ if (process.env.GLOSS_SMOKE) {
               r.web = { text: await wv.executeJavaScript('document.body.innerText'), title: await wv.executeJavaScript('document.title'), status: document.querySelector('#web-status').textContent };
               window.App.setMode('image');
             }
-            const videoFile = ${JSON.stringify(process.env.GLOSS_SMOKE_VIDEO || '')};
+            const videoFile = ${JSON.stringify(process.env.RETOLD_SMOKE_VIDEO || '')};
             if (videoFile) {
               window.App.setMode('video');
               await window.Video.open(videoFile);
@@ -364,7 +364,7 @@ if (process.env.GLOSS_SMOKE) {
               r.video.overlay2 = document.querySelector('#sub-overlay').innerText;
               window.App.setMode('image');
             }
-            const pdfFile = ${JSON.stringify(process.env.GLOSS_SMOKE_PDF || '')};
+            const pdfFile = ${JSON.stringify(process.env.RETOLD_SMOKE_PDF || '')};
             if (pdfFile) {
               await window.Docs.open([pdfFile]);
               const p = window.Viewer.pages.find(q => q.fromPdf);
@@ -376,7 +376,7 @@ if (process.env.GLOSS_SMOKE) {
               const p = window.Viewer.pages[0];
               const c = document.querySelector('#c-translated');
               const blob = await new Promise(res => c.toBlob(res, 'image/png'));
-              await window.gloss.call('file:write', ${JSON.stringify(out || '')}, await blob.arrayBuffer());
+              await window.retold.call('file:write', ${JSON.stringify(out || '')}, await blob.arrayBuffer());
             }
             return r;
           })()`);

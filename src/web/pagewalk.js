@@ -9,7 +9,7 @@
 // It is sent to the page as a string, so it has no imports; `install` is serialised whole.
 
 function install() {
-  if (window.__gloss) return;
+  if (window.__retold) return;
   const INLINE = new Set(['A', 'ABBR', 'B', 'BDI', 'BDO', 'BIG', 'CITE', 'DEL', 'DFN', 'EM', 'FONT', 'I', 'INS', 'KBD', 'MARK', 'Q', 'S', 'SAMP', 'SMALL', 'SPAN', 'STRIKE', 'STRONG', 'SUB', 'SUP', 'TIME', 'TT', 'U', 'VAR', 'WBR', 'BR', 'IMG', 'LABEL', 'CODE']);
   const SKIP = new Set(['SCRIPT', 'STYLE', 'NOSCRIPT', 'TEXTAREA', 'INPUT', 'SELECT', 'IFRAME', 'SVG', 'MATH', 'PRE', 'CANVAS', 'VIDEO', 'AUDIO', 'TEMPLATE', 'OBJECT', 'HEAD']);
   const ATTRS = ['alt', 'title', 'placeholder', 'aria-label'];
@@ -19,7 +19,7 @@ function install() {
   let next = 1, mode = 'translated', pending = [];
   const seen = new WeakSet(); // text nodes already in a run
 
-  const skipped = (el) => !el || SKIP.has(el.tagName) || el.isContentEditable || el.getAttribute('translate') === 'no' || /\bnotranslate\b/.test(el.className || '') || el.closest('.gloss-t,[translate="no"],.notranslate');
+  const skipped = (el) => !el || SKIP.has(el.tagName) || el.isContentEditable || el.getAttribute('translate') === 'no' || /\bnotranslate\b/.test(el.className || '') || el.closest('.retold-t,[translate="no"],.notranslate');
   const isInline = (n) => n.nodeType === 1 && INLINE.has(n.tagName) && !skipped(n) && !hasBlockInside(n);
   function hasBlockInside(el) {
     for (const c of el.childNodes) if (c.nodeType === 1 && (!INLINE.has(c.tagName) || hasBlockInside(c))) return true;
@@ -80,13 +80,13 @@ function install() {
     // Text in attributes: a picture's alt text, a button's tooltip, a field's placeholder.
     const withAttrs = [top, ...top.querySelectorAll(ATTRS.map(a => `[${a}]`).join(','))];
     for (const el of withAttrs) {
-      if (el.nodeType !== 1 || skipped(el) || el.closest('.gloss-t')) continue;
+      if (el.nodeType !== 1 || skipped(el) || el.closest('.retold-t')) continue;
       for (const a of ATTRS) {
         const v = el.getAttribute(a);
-        if (v && LETTERS.test(v) && !el.hasAttribute('data-gloss-' + a)) {
+        if (v && LETTERS.test(v) && !el.hasAttribute('data-retold-' + a)) {
           const id = 'a' + next++;
           attrs.set(id, { el, name: a, original: v });
-          el.setAttribute('data-gloss-' + a, '1');
+          el.setAttribute('data-retold-' + a, '1');
           out.push({ id, text: v });
         }
       }
@@ -129,7 +129,7 @@ function install() {
       const first = r.nodes[0];
       if (!first.parentNode) continue;
       const wrapper = document.createElement('span');
-      wrapper.className = 'gloss-t'; wrapper.style.display = 'contents'; wrapper.setAttribute('data-gloss-id', id);
+      wrapper.className = 'retold-t'; wrapper.style.display = 'contents'; wrapper.setAttribute('data-retold-id', id);
       wrapper.title = r.nodes.map(x => x.textContent).join('').trim();
       first.parentNode.insertBefore(wrapper, first);
       const original = document.createDocumentFragment();
@@ -163,7 +163,7 @@ function install() {
   // Text the page added after the first pass.
   const observer = new MutationObserver((records) => {
     for (const rec of records) for (const node of rec.addedNodes) {
-      if (node.nodeType !== 1 || node.closest('.gloss-t') || skipped(node)) continue;
+      if (node.nodeType !== 1 || node.closest('.retold-t') || skipped(node)) continue;
       pending.push(node);
     }
   });
@@ -172,11 +172,11 @@ function install() {
   function collectPending() {
     const roots = pending.filter(n => n.isConnected); pending = [];
     const out = [];
-    for (const r of roots) { if (r.closest('.gloss-t')) continue; for (const x of collect(r)) out.push(x); }
+    for (const r of roots) { if (r.closest('.retold-t')) continue; for (const x of collect(r)) out.push(x); }
     return out;
   }
 
-  window.__gloss = { collect: () => collect(), pending: collectPending, apply, show, count: () => runs.size, lang: () => document.documentElement.lang || '' };
+  window.__retold = { collect: () => collect(), pending: collectPending, apply, show, count: () => runs.size, lang: () => document.documentElement.lang || '' };
 }
 
 const script = `(${install.toString()})();`;

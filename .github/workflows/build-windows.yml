@@ -32,8 +32,8 @@ jobs:
         continue-on-error: true
         shell: bash
         run: |
-          export GLOSS_SMOKE_BIN="$PWD/dist/win-unpacked/Gloss.exe"
-          export GLOSS_SMOKE_OUTDIR="$PWD/smoke-out"
+          export RETOLD_SMOKE_BIN="$PWD/dist/win-unpacked/Retold.exe"
+          export RETOLD_SMOKE_OUTDIR="$PWD/smoke-out"
           node test/smoke.js
 
       - name: Summarise smoke test
@@ -50,7 +50,7 @@ jobs:
       - uses: actions/upload-artifact@v5
         if: always()
         with:
-          name: gloss-windows
+          name: retold-windows
           path: |
             dist/*.exe
             smoke-out/
@@ -64,4 +64,4 @@ jobs:
         run: |
           VERSION=$(node -p "require('./package.json').version")
           if gh release view "v$VERSION" >/dev/null 2>&1; then echo "v$VERSION already released"; exit 0; fi
-          gh release create "v$VERSION" dist/*.exe --title "Gloss $VERSION" --notes "Gloss $VERSION. Download Gloss-Setup to install, or the portable file to run without installing. Windows SmartScreen asks once: More info, then Run anyway."
+          gh release create "v$VERSION" dist/*.exe --title "Retold $VERSION" --notes "Retold $VERSION. Download Retold-Setup to install, or the portable file to run without installing. Windows SmartScreen asks once: More info, then Run anyway."

@@ -1,7 +1,7 @@
 {
-  "name": "gloss",
+  "name": "retold",
   "version": "0.1.0",
-  "description": "Gloss: AI translation laid over the original. Manga and other pictures (speech bubbles found, the lettering lifted out, the translation set in its style), web pages in place, PDF/Word/PowerPoint/Excel/text/subtitle files, and video with the translation prepared a minute ahead and burned-in subtitles covered.",
+  "description": "Retold: AI translation laid over the original. Manga and other pictures (speech bubbles found, the lettering lifted out, the translation set in its style), web pages in place, PDF/Word/PowerPoint/Excel/text/subtitle files, and video with the translation prepared a minute ahead and burned-in subtitles covered.",
   "main": "main.js",
   "license": "MIT",
   "scripts": {
@@ -30,8 +30,8 @@
   },
   "author": "wjun78",
   "build": {
-    "appId": "io.github.wenjun78.gloss",
-    "productName": "Gloss",
+    "appId": "io.github.wenjun78.retold",
+    "productName": "Retold",
     "asar": false,
     "files": [
       "main.js",
@@ -46,7 +46,12 @@
       "!node_modules/pdfjs-dist/build/pdf.mjs",
       "!node_modules/pdfjs-dist/build/pdf.worker.mjs",
       "!node_modules/pdfjs-dist/build/pdf.sandbox*",
-      "!node_modules/pdfjs-dist/image_decoders/**"
+      "!node_modules/pdfjs-dist/image_decoders/**",
+      "!node_modules/ffmpeg-static/ffmpeg",
+      "!node_modules/ffmpeg-static/ffmpeg.LICENSE",
+      "!node_modules/ffmpeg-static/ffmpeg.README",
+      "!node_modules/@napi-rs/**",
+      "!node_modules/jsdom/**"
     ],
     "directories": {
       "buildResources": "build",
@@ -64,11 +69,11 @@
       "perMachine": false,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "Gloss",
-      "artifactName": "Gloss-Setup-${version}.${ext}"
+      "shortcutName": "Retold",
+      "artifactName": "Retold-Setup-${version}.${ext}"
     },
     "portable": {
-      "artifactName": "Gloss-${version}-portable.${ext}"
+      "artifactName": "Retold-${version}-portable.${ext}"
     },
     "mac": {
       "target": "dmg",
@@ -86,9 +91,9 @@
       {
         "provider": "github",
         "owner": "wenjun78",
-        "repo": "gloss"
+        "repo": "retold"
       }
     ],
-    "copyright": "Copyright © 2026 wjun78"
+    "copyright": "Copyright \u00a9 2026 wjun78"
   }
 }

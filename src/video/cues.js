@@ -3,7 +3,7 @@
 // comfortably, and finding the cue showing at a moment. Pure, shared with the window.
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) module.exports = factory();
-  else (root.Gloss = root.Gloss || {}).cues = factory();
+  else (root.Retold = root.Retold || {}).cues = factory();
 })(typeof self !== 'undefined' ? self : this, function () {
   'use strict';
 

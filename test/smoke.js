@@ -1,7 +1,7 @@
 'use strict';
 // Starts the real app against the mock API, has it open and translate a drawn comic page
 // through the window, and checks what came out. Runs from source (`node test/smoke.js`)
-// or against a packaged build (GLOSS_SMOKE_BIN=path/to/Gloss.exe). On Linux without a
+// or against a packaged build (RETOLD_SMOKE_BIN=path/to/Retold.exe). On Linux without a
 // display it runs under xvfb-run when that is installed.
 const { spawn, execSync } = require('child_process');
 const fs = require('fs');
@@ -13,10 +13,10 @@ const { PNG } = require('pngjs');
 
 (async () => {
   const srv = await mock.start();
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'gloss-smoke-'));
-  const outDir = process.env.GLOSS_SMOKE_OUTDIR || dir;
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'retold-smoke-'));
+  const outDir = process.env.RETOLD_SMOKE_OUTDIR || dir;
   fs.mkdirSync(outDir, { recursive: true });
-  const config = { llm: { baseUrl: srv.base + '/v1', apiKey: 'test-key', model: 'chat-model', extra: {} }, image: { ocr: 'vision' }, languages: { source: 'ja', target: process.env.GLOSS_SMOKE_TARGET || 'en' }, ui: { mode: 'image' } };
+  const config = { llm: { baseUrl: srv.base + '/v1', apiKey: 'test-key', model: 'chat-model', extra: {} }, image: { ocr: 'vision' }, languages: { source: 'ja', target: process.env.RETOLD_SMOKE_TARGET || 'en' }, ui: { mode: 'image' } };
   fs.writeFileSync(path.join(dir, 'config.json'), JSON.stringify(config));
   const { canvas } = drawPage();
   const image = path.join(dir, 'page.png');
@@ -30,9 +30,9 @@ const { PNG } = require('pngjs');
   pg.drawText('The quick brown fox', { x: 40, y: 240, size: 18, font }); pg.drawText('jumps over the lazy dog.', { x: 40, y: 216, size: 18, font }); pg.drawText('A second paragraph.', { x: 40, y: 120, size: 18, font });
   const pdfFile = path.join(dir, 'doc.pdf'); fs.writeFileSync(pdfFile, await pdfDoc.save());
   const resultFile = path.join(outDir, 'result.json'), out = path.join(outDir, 'translated.png');
-  const env = { ...process.env, GLOSS_USER_DATA: dir, GLOSS_SMOKE: resultFile, GLOSS_SMOKE_IMAGE: image, GLOSS_SMOKE_OUT: out, GLOSS_SMOKE_WEB: srv.base + '/page.html', GLOSS_SMOKE_VIDEO: made.code === 0 ? clip : '', GLOSS_SMOKE_PDF: pdfFile };
+  const env = { ...process.env, RETOLD_USER_DATA: dir, RETOLD_SMOKE: resultFile, RETOLD_SMOKE_IMAGE: image, RETOLD_SMOKE_OUT: out, RETOLD_SMOKE_WEB: srv.base + '/page.html', RETOLD_SMOKE_VIDEO: made.code === 0 ? clip : '', RETOLD_SMOKE_PDF: pdfFile };
   let cmd, args;
-  if (process.env.GLOSS_SMOKE_BIN) { cmd = process.env.GLOSS_SMOKE_BIN; args = []; }
+  if (process.env.RETOLD_SMOKE_BIN) { cmd = process.env.RETOLD_SMOKE_BIN; args = []; }
   else { cmd = require('electron'); args = [path.join(__dirname, '..')]; }
   if (process.platform === 'linux' && !process.env.DISPLAY) {
     let xvfb = ''; try { xvfb = execSync('which xvfb-run').toString().trim(); } catch { /* none */ }

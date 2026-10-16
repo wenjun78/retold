@@ -5,7 +5,7 @@
 // (columns right to left), everything else left to right.
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) module.exports = factory();
-  else (root.Gloss = root.Gloss || {}).languages = factory();
+  else (root.Retold = root.Retold || {}).languages = factory();
 })(typeof self !== 'undefined' ? self : this, function () {
 'use strict';
 const LANGUAGES = [

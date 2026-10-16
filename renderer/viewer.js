@@ -22,7 +22,7 @@ window.Viewer = (() => {
   }
 
   async function addFile(file) {
-    const url = await window.gloss.call('file:url', file);
+    const url = await window.retold.call('file:url', file);
     const img = new Image();
     await new Promise((res, rej) => { img.onload = res; img.onerror = () => rej(new Error('This picture could not be opened.')); img.src = url; });
     const c = document.createElement('canvas'); c.width = img.naturalWidth; c.height = img.naturalHeight;
@@ -35,7 +35,7 @@ window.Viewer = (() => {
     const id = 'p' + nextId++;
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     const data = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    await window.gloss.call('page:open', { id, width: canvas.width, height: canvas.height, data: data.data.buffer.slice(0), lines });
+    await window.retold.call('page:open', { id, width: canvas.width, height: canvas.height, data: data.data.buffer.slice(0), lines });
     const thumb = document.createElement('canvas'); thumb.width = 150; thumb.height = Math.round(150 * canvas.height / canvas.width);
     thumb.getContext('2d').drawImage(canvas, 0, 0, thumb.width, thumb.height);
     const p = { id, name, path, canvas, width: canvas.width, height: canvas.height, erased: null, regions: [], state: 'new', thumb: thumb.toDataURL('image/jpeg', 0.7), pt, fromPdf: Boolean(lines) };
@@ -140,7 +140,7 @@ window.Viewer = (() => {
     if (!drag) return;
     const { r } = drag; drag = null;
     const p = page();
-    await window.gloss.call('page:update', p.id, r.id, { x: r.x, y: r.y, w: r.w, h: r.h });
+    await window.retold.call('page:update', p.id, r.id, { x: r.x, y: r.y, w: r.w, h: r.h });
     await refresh(p, { reread: !r.source });
   }
   // Drawing a new box on empty space.
@@ -157,7 +157,7 @@ window.Viewer = (() => {
       ghost.remove();
       const box = { x: Math.min(x0, x1), y: Math.min(y0, y1), w: Math.abs(x1 - x0), h: Math.abs(y1 - y0) };
       if (box.w < 12 || box.h < 12) return;
-      const r = await window.gloss.call('page:add', p.id, box);
+      const r = await window.retold.call('page:add', p.id, box);
       p.regions.push(r); selected = r.id;
       await refresh(p, { reread: true, only: [r.id] });
     };
@@ -166,7 +166,7 @@ window.Viewer = (() => {
 
   async function removeRegion(id) {
     const p = page();
-    p.regions = await window.gloss.call('page:remove', p.id, id);
+    p.regions = await window.retold.call('page:remove', p.id, id);
     if (selected === id) selected = null;
     await refresh(p, {});
   }
@@ -174,10 +174,10 @@ window.Viewer = (() => {
   // Reads (when asked), translates what has no translation yet, lifts the lettering and redraws.
   async function refresh(p, { reread = false, only = null } = {}) {
     try {
-      if (reread) for (const id of (only || p.regions.map(r => r.id))) { const r = await window.gloss.call('page:read', p.id, id); if (r) p.regions = p.regions.map(x => x.id === r.id ? { ...x, ...r } : x); }
+      if (reread) for (const id of (only || p.regions.map(r => r.id))) { const r = await window.retold.call('page:read', p.id, id); if (r) p.regions = p.regions.map(x => x.id === r.id ? { ...x, ...r } : x); }
       const todo = p.regions.filter(r => r.source && !r.target).map(r => r.id);
-      if (todo.length) p.regions = await window.gloss.call('page:translate', p.id, todo);
-      const { regions, image } = await window.gloss.call('page:erase', p.id);
+      if (todo.length) p.regions = await window.retold.call('page:translate', p.id, todo);
+      const { regions, image } = await window.retold.call('page:erase', p.id);
       p.regions = regions; p.erased = new ImageData(new Uint8ClampedArray(image), p.width, p.height);
       if (p.regions.some(r => r.target)) p.state = 'translated';
     } catch (e) { window.App.notice(e.message, 'error'); }
@@ -196,11 +196,11 @@ window.Viewer = (() => {
         <textarea class="src" rows="2" placeholder="Original (edit if misread)"></textarea><textarea class="dst" rows="2" placeholder="Translation"></textarea>`;
       li.querySelector('.src').value = r.source || ''; li.querySelector('.dst').value = r.target || '';
       li.addEventListener('focusin', () => { if (selected !== r.id) { selected = r.id; drawBoxes(); for (const x of ol.children) x.classList.toggle('sel', x === li); } });
-      li.querySelector('.src').addEventListener('change', async (e) => { await window.gloss.call('page:update', p.id, r.id, { source: e.target.value, target: '' }); r.source = e.target.value; r.target = ''; await refresh(p, {}); });
+      li.querySelector('.src').addEventListener('change', async (e) => { await window.retold.call('page:update', p.id, r.id, { source: e.target.value, target: '' }); r.source = e.target.value; r.target = ''; await refresh(p, {}); });
       li.querySelector('.dst').addEventListener('input', (e) => { r.target = e.target.value; draw(); });
-      li.querySelector('.dst').addEventListener('change', (e) => { window.gloss.call('page:update', p.id, r.id, { target: e.target.value }); });
-      li.querySelector('[data-act=read]').addEventListener('click', async () => { r.target = ''; await window.gloss.call('page:update', p.id, r.id, { target: '' }); await refresh(p, { reread: true, only: [r.id] }); });
-      li.querySelector('[data-act=retranslate]').addEventListener('click', async () => { await window.gloss.call('page:update', p.id, r.id, { target: '' }); r.target = ''; await refresh(p, {}); });
+      li.querySelector('.dst').addEventListener('change', (e) => { window.retold.call('page:update', p.id, r.id, { target: e.target.value }); });
+      li.querySelector('[data-act=read]').addEventListener('click', async () => { r.target = ''; await window.retold.call('page:update', p.id, r.id, { target: '' }); await refresh(p, { reread: true, only: [r.id] }); });
+      li.querySelector('[data-act=retranslate]').addEventListener('click', async () => { await window.retold.call('page:update', p.id, r.id, { target: '' }); r.target = ''; await refresh(p, {}); });
       ol.appendChild(li);
     });
   }
@@ -212,14 +212,14 @@ window.Viewer = (() => {
     const mine = () => page() === p;
     try {
       if (mine()) status(p.fromPdf ? 'Reading the page…' : 'Finding speech bubbles…');
-      p.regions = await window.gloss.call('page:detect', p.id);
+      p.regions = await window.retold.call('page:detect', p.id);
       if (mine()) { renderRegions(); status(`Reading ${p.regions.length} ${p.fromPdf ? 'blocks' : 'bubbles'}…`); }
-      if (!p.fromPdf) p.regions = await window.gloss.call('page:readAll', p.id);
+      if (!p.fromPdf) p.regions = await window.retold.call('page:readAll', p.id);
       if (!p.regions.length) { p.state = 'new'; if (mine()) status('No text was found. Turn on "Edit boxes" and draw a box around the text.'); renderList(); return; }
       if (mine()) { renderRegions(); status('Translating…'); }
-      p.regions = await window.gloss.call('page:translate', p.id);
+      p.regions = await window.retold.call('page:translate', p.id);
       if (mine()) status('Lifting the original lettering out…');
-      const { regions, image } = await window.gloss.call('page:erase', p.id);
+      const { regions, image } = await window.retold.call('page:erase', p.id);
       p.regions = regions; p.erased = new ImageData(new Uint8ClampedArray(image), p.width, p.height);
       p.state = 'translated';
       if (mine()) status(`${p.regions.filter(r => r.target).length} translated. Slide the overlay to compare; fix any text on the right.`);
@@ -252,27 +252,27 @@ window.Viewer = (() => {
     const stem = p.name.replace(/\.[^.]+$/, '');
     try {
       if (kind === 'png') {
-        const file = await window.gloss.call('dialog:save', { name: `${stem}.${cfg().languages.target}.png`, filters: [{ name: 'PNG', extensions: ['png'] }] });
-        if (file) { await window.gloss.call('file:write', file, await pngOf(translatedCanvas(p))); status(`Saved ${file}`); }
+        const file = await window.retold.call('dialog:save', { name: `${stem}.${cfg().languages.target}.png`, filters: [{ name: 'PNG', extensions: ['png'] }] });
+        if (file) { await window.retold.call('file:write', file, await pngOf(translatedCanvas(p))); status(`Saved ${file}`); }
       } else if (kind === 'side') {
         const c = document.createElement('canvas'); c.width = p.width * 2 + 12; c.height = p.height;
         const ctx = c.getContext('2d'); ctx.fillStyle = '#888'; ctx.fillRect(0, 0, c.width, c.height); ctx.drawImage(p.canvas, 0, 0); ctx.drawImage(translatedCanvas(p), p.width + 12, 0);
-        const file = await window.gloss.call('dialog:save', { name: `${stem}.side-by-side.png`, filters: [{ name: 'PNG', extensions: ['png'] }] });
-        if (file) { await window.gloss.call('file:write', file, await pngOf(c)); status(`Saved ${file}`); }
+        const file = await window.retold.call('dialog:save', { name: `${stem}.side-by-side.png`, filters: [{ name: 'PNG', extensions: ['png'] }] });
+        if (file) { await window.retold.call('file:write', file, await pngOf(c)); status(`Saved ${file}`); }
       } else if (kind === 'all') {
         const files = [];
         for (const q of pages) {
           if (!q.path) continue;
           const out = q.path.replace(/\.[^.]+$/, '') + `.${cfg().languages.target}.png`;
-          await window.gloss.call('file:write', out, await pngOf(translatedCanvas(q))); files.push(out);
+          await window.retold.call('file:write', out, await pngOf(translatedCanvas(q))); files.push(out);
         }
         status(`Saved ${files.length} pages next to the originals.`);
       } else if (kind === 'pdf') {
-        const file = await window.gloss.call('dialog:save', { name: `${stem.replace(/\.pdf$/i, '')}.${cfg().languages.target}.pdf`, filters: [{ name: 'PDF', extensions: ['pdf'] }] });
+        const file = await window.retold.call('dialog:save', { name: `${stem.replace(/\.pdf$/i, '')}.${cfg().languages.target}.pdf`, filters: [{ name: 'PDF', extensions: ['pdf'] }] });
         if (!file) return;
         const out = [];
         for (const q of pages) out.push({ png: await pngOf(translatedCanvas(q)), width: q.pt ? q.pt.width : q.width, height: q.pt ? q.pt.height : q.height });
-        await window.gloss.call('pdf:export', out, file);
+        await window.retold.call('pdf:export', out, file);
         status(`Saved ${file}`);
       }
     } catch (e) { window.App.notice(e.message, 'error'); }
@@ -281,11 +281,11 @@ window.Viewer = (() => {
   // ---- wiring ----------------------------------------------------------------------------------
   function init(s) {
     settings = s;
-    $('#img-open').addEventListener('click', async () => openFiles(await window.gloss.call('dialog:open', { kind: 'image', multiple: true })));
-    $('#img-folder').addEventListener('click', async () => openFiles(await window.gloss.call('dialog:open', { folder: true })));
+    $('#img-open').addEventListener('click', async () => openFiles(await window.retold.call('dialog:open', { kind: 'image', multiple: true })));
+    $('#img-folder').addEventListener('click', async () => openFiles(await window.retold.call('dialog:open', { folder: true })));
     $('#img-translate').addEventListener('click', () => translatePage(page()));
     $('#img-translate-all').addEventListener('click', translateAll);
-    $('#img-reread').addEventListener('click', async () => { const p = page(); if (!p) return; p.regions = []; p.erased = null; p.state = 'new'; await window.gloss.call('page:reset', p.id); await translatePage(p); });
+    $('#img-reread').addEventListener('click', async () => { const p = page(); if (!p) return; p.regions = []; p.erased = null; p.state = 'new'; await window.retold.call('page:reset', p.id); await translatePage(p); });
     $('#opacity').addEventListener('input', (e) => { state.opacity = Number(e.target.value) / 100; $('#opacity-val').textContent = e.target.value + '%'; applyOpacity(); });
     $('#show-original').addEventListener('click', () => { state.show = 'original'; $('#show-original').classList.add('on'); $('#show-translated').classList.remove('on'); applyOpacity(); });
     $('#show-translated').addEventListener('click', () => { state.show = 'translated'; $('#show-translated').classList.add('on'); $('#show-original').classList.remove('on'); applyOpacity(); });
@@ -298,7 +298,7 @@ window.Viewer = (() => {
     ]));
     window.addEventListener('resize', () => { if (page()) draw(); });
     window.App.dropZone($('#canvas-wrap'), (files) => openFiles(files.filter(f => /\.(png|jpe?g|webp|bmp|gif)$/i.test(f))));
-    window.gloss.on('progress', (m) => { if (m.what === 'read' && page() && m.page === page().id) status(`Reading ${m.done} of ${m.total}…`); });
+    window.retold.on('progress', (m) => { if (m.what === 'read' && page() && m.page === page().id) status(`Reading ${m.done} of ${m.total}…`); });
   }
 
   function onSettings(s) { settings = s; if (page()) draw(); }

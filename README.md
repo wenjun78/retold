@@ -1,6 +1,6 @@
-# Gloss
+# Retold
 
-AI translation laid over the original. Built on the same base as
+The original, retold in your language — laid right over it. Built on the same base as
 [Cue](https://github.com/wenjun78/meeting_copilot) (Electron, any
 OpenAI-compatible API, OCR on your own machine), for everything that is not a
 live call:
@@ -14,7 +14,7 @@ live call:
 
 ## Install it (Windows)
 
-Download **Gloss-Setup** from the Releases page and run it. It installs for
+Download **Retold-Setup** from the Releases page and run it. It installs for
 your user only (no admin rights). The **portable** file runs without
 installing. The build is not code-signed, so Windows SmartScreen asks once:
 "More info", then "Run anyway".
@@ -31,7 +31,12 @@ npm start
 `npm test` runs the unit tests. `npm run smoke` starts the real app against a
 mock API, has it translate a drawn comic page, a web page and a clip, and
 checks what came out (on Linux without a display it uses `xvfb-run`).
-`npm run dist` builds the installer into `dist/`.
+`npm run dist` builds the installer into `dist/` (on Windows). Building the
+Windows installer from Linux or macOS works too — `npx electron-builder --win
+--x64` — but needs the Windows ffmpeg first
+(`cd node_modules/ffmpeg-static && npm_config_platform=win32 npm_config_arch=x64 node install.js`)
+and wine for the NSIS uninstaller step; the GitHub workflow does all of this
+on a real Windows runner for every push to `main`.
 
 ## First run
 
