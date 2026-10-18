@@ -5,7 +5,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const mock = require('./mock-server');
-const { drawPage, drawBand } = require('./page');
+const { drawPage, drawBand, cjk: hasCjkFont } = require('./page');
 const languages = require('../src/languages');
 const { ConfigStore, DEFAULTS } = require('../src/config');
 const { LLM, segmentsOf } = require('../src/llm');
@@ -183,7 +183,6 @@ test('mask, style and inpaint: lettering found, its size and direction read, pap
 });
 
 test('mask on art: white letters with a black outline, the outline told from the fill', () => {
-  const { drawBand } = require('./page');
   const { img } = drawBand({ text: 'ドドドド', noise: false });
   const region = { x: 300, y: 40, w: 360, h: 110, kind: 'text' };
   const tm = textMask(img, region);
@@ -239,6 +238,7 @@ test('ocr: the English bubble is read with boxes, outline masked out; lines join
 });
 
 test('ocr: vertical Japanese is read top to bottom (language data fetched once)', async (t) => {
+  if (!hasCjkFont) { t.skip('no font on this machine draws Japanese, so the page cannot be lettered in it'); return; }
   const { img } = drawPage();
   const dir = path.join(tmp, 'tessdata-ja'); fs.mkdirSync(dir, { recursive: true });
   const local = path.join(__dirname, 'fixtures', 'tessdata');
