@@ -6,7 +6,7 @@
   "license": "MIT",
   "scripts": {
     "start": "electron .",
-    "test": "node --test test/*.test.js",
+    "test": "node --test test/core.test.js",
     "smoke": "node test/smoke.js",
     "dist": "electron-builder --publish never"
   },

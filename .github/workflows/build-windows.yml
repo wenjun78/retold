@@ -24,7 +24,28 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm test
+
+      # Test output goes to a file as well, so a failure can be read off the run page even
+      # when the raw log is not reachable.
+      - name: Unit tests
+        shell: bash
+        run: |
+          set -o pipefail
+          npm test 2>&1 | tee test.log
+
+      - name: Report failing tests
+        if: failure()
+        shell: bash
+        run: |
+          node -e "
+            const fs = require('fs');
+            const log = fs.readFileSync('test.log', 'utf8').split(/\r?\n/);
+            const keep = log.filter(l => /^not ok|^\s+(error|expected|actual|message|code|failureType|stack):|^\s+at .*(core\.test|page\.js|src[\\\/])|^# (pass|fail|skipped)|Error|ENOENT/.test(l)).map(l => l.slice(0, 220));
+            const enc = (t) => t.replace(/%/g, '%25').replace(/\r/g, '%0D').replace(/\n/g, '%0A');
+            for (let i = 0; i < Math.min(keep.length, 120); i += 30) console.log('::error title=npm test (' + (i / 30 + 1) + ')::' + enc(keep.slice(i, i + 30).join('\n')));
+            if (!keep.length) console.log('::error title=npm test::' + enc(log.slice(-30).join('\n')));
+          "
+
       - run: npm run dist
 
       # Drives the packaged app through a page, a web page and a clip against a mock API.
@@ -54,6 +75,7 @@ jobs:
           path: |
             dist/*.exe
             smoke-out/
+            test.log
           if-no-files-found: warn
 
       - name: Publish release
